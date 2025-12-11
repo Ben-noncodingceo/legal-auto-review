@@ -37,12 +37,20 @@ export const generateAndDownloadReport = async (
       if(riskLabel === 'financial') riskLabel = '财务风险';
       if(riskLabel === 'execution') riskLabel = '执行风险';
 
+      let levelLabel = item.risk_level;
+      if (levelLabel === 'high') levelLabel = '高风险';
+      else if (levelLabel === 'medium') levelLabel = '中等风险';
+      else if (levelLabel === 'low') levelLabel = '低风险';
+
+      const titleText = `${index + 1}. [${riskLabel}]` + (levelLabel ? ` [${levelLabel}]` : '');
+
       riskParagraphs.push(
         new Paragraph({
           children: [
             new TextRun({
-              text: `${index + 1}. [${riskLabel}]`,
+              text: titleText,
               bold: true,
+              color: item.risk_level === 'high' ? "FF0000" : "000000",
             }),
           ],
           spacing: { before: 200 },

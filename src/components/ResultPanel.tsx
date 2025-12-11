@@ -67,6 +67,24 @@ const ResultPanel: React.FC<Props> = ({ result, aiConfig, onDownload }) => {
     }
   };
 
+  const getRiskLevelColor = (level: string) => {
+    switch (level) {
+      case 'high': return 'error';
+      case 'medium': return 'warning';
+      case 'low': return 'success';
+      default: return 'default';
+    }
+  };
+
+  const getRiskLevelLabel = (level: string) => {
+    switch (level) {
+      case 'high': return '高风险';
+      case 'medium': return '中等风险';
+      case 'low': return '低风险';
+      default: return level || '未知等级';
+    }
+  };
+
   return (
     <div className="h-full flex flex-col gap-4 overflow-y-auto p-2">
       <Card title="审核结果" extra={<Button icon={<DownloadOutlined />} onClick={onDownload}>下载报告</Button>}>
@@ -76,7 +94,15 @@ const ResultPanel: React.FC<Props> = ({ result, aiConfig, onDownload }) => {
           <Collapse defaultActiveKey={['0']}>
             {reviews.map((item: any, idx: number) => (
               <Panel 
-                header={<Space><Tag color={getRiskColor(item.risk_type)}>{getRiskLabel(item.risk_type)}</Tag> 风险项 #{idx + 1}</Space>} 
+                header={
+                  <Space>
+                    <Tag color={getRiskColor(item.risk_type)}>{getRiskLabel(item.risk_type)}</Tag>
+                    {item.risk_level && (
+                      <Tag color={getRiskLevelColor(item.risk_level)}>{getRiskLevelLabel(item.risk_level)}</Tag>
+                    )}
+                    风险项 #{idx + 1}
+                  </Space>
+                } 
                 key={idx}
               >
                 <Paragraph><strong>原因：</strong> {item.reason}</Paragraph>

@@ -46,7 +46,12 @@ export const callAIReview = async (
     你是一位专业的法律审核助手。
     请审核以下法律文件的内容片段。
     
-    重点关注以下风险：${selectedRisks}。
+    重點关注以下风险：${selectedRisks}。
+
+    风险等级说明：
+    - high (高风险): 改进空间很大，大概率出问题
+    - medium (中等风险): 有一定的改进空间，类似情况小概率出问题
+    - low (低风险): 大概率不会出现问题，有很小的改进空间
     
     文件内容片段：
     ${chunk}
@@ -57,12 +62,14 @@ export const callAIReview = async (
         {
           "original_text_snippet": "引起问题的具体原文片段",
           "risk_type": "policy|financial|execution",
+          "risk_level": "high|medium|low",
           "reason": "为什么这是一个风险",
           "suggestion": "如何修改"
         }
       ]
     }
     risk_type 字段请严格使用 "policy", "financial", "execution" 这三个英文枚举值。
+    risk_level 字段请严格使用 "high", "medium", "low" 这三个英文枚举值。
     reason 和 suggestion 请使用中文。
     如果未发现风险，请返回 {"reviews": []}。
     请直接输出JSON字符串，不要包含markdown代码块标记（如 \`\`\`json）。

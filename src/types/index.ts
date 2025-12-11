@@ -8,11 +8,14 @@ export interface AIConfig {
 
 export type RiskType = 'policy' | 'financial' | 'execution';
 
+export type RiskLevel = 'high' | 'medium' | 'low';
+
 export interface ReviewResult {
   originalText: string;
   markedText: string; // HTML or structured text with markers
   risks: {
     type: RiskType;
+    level: RiskLevel;
     details: string;
     suggestion: string;
     location?: string; // e.g., paragraph index or snippet

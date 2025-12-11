@@ -32,10 +32,16 @@ export const callAIReview = async (
   const selectedRisks = risks.map(r => riskLabels[r]).join('、');
   
   // 1. Chunking Strategy
-  const MAX_CHUNK_SIZE = 3000; // Reduced to avoid truncation (safe limit for most models)
+  const MAX_CHUNK_SIZE = 3000; 
+  const OVERLAP_SIZE = 500; // Overlap to prevent context loss at boundaries
   const chunks = [];
-  for (let i = 0; i < text.length; i += MAX_CHUNK_SIZE) {
-    chunks.push(text.substring(i, i + MAX_CHUNK_SIZE));
+  
+  let i = 0;
+  while (i < text.length) {
+    const end = Math.min(i + MAX_CHUNK_SIZE, text.length);
+    chunks.push(text.substring(i, end));
+    if (end === text.length) break;
+    i += (MAX_CHUNK_SIZE - OVERLAP_SIZE);
   }
 
   onProgress?.(`文档已拆分为 ${chunks.length} 个部分进行分析...`);

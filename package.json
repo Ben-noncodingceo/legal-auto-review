@@ -1,0 +1,35 @@
+{
+  "name": "legal-auto-review",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "antd": "^5.12.0",
+    "axios": "^1.6.0",
+    "docx": "^9.5.1",
+    "docxtemplater": "^3.42.0",
+    "file-saver": "^2.0.5",
+    "lucide-react": "^0.294.0",
+    "mammoth": "^1.6.0",
+    "pdfjs-dist": "^3.11.174",
+    "pizzip": "^3.1.4",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/file-saver": "^2.0.7",
+    "@types/react": "^18.2.43",
+    "@types/react-dom": "^18.2.17",
+    "@vitejs/plugin-react": "^4.2.1",
+    "autoprefixer": "^10.4.17",
+    "postcss": "^8.4.33",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5.2.2",
+    "vite": "^5.0.8"
+  }
+}

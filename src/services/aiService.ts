@@ -72,8 +72,12 @@ export const callAIReview = async (
     risk_level 字段请严格使用 "high", "medium", "low" 这三个英文枚举值。
     reason 和 suggestion 请使用中文。
     如果未发现风险，请返回 {"reviews": []}。
-    请直接输出JSON字符串，不要包含markdown代码块标记（如 \`\`\`json）。
-    注意：JSON字符串中不得包含未转义的控制字符或引号。
+    
+    重要：请确保输出的是合法的纯JSON字符串。
+    1. 不要包含markdown代码块标记（如 ```json）。
+    2. JSON字符串中不得包含未转义的控制字符（如换行符）。
+    3. 如果内容中包含引号，请使用单引号或转义双引号。
+    4. 不要添加任何注释。
     `;
 
     // Handle specific provider logic
@@ -108,7 +112,17 @@ export const callAIReview = async (
         } else if (jsonStr.includes('```')) {
           jsonStr = jsonStr.split('```')[1].split('```')[0];
         }
-        // Clean up quotes
+        
+        // Trim whitespace
+        jsonStr = jsonStr.trim();
+
+        // Basic cleanup for common JSON errors
+        // 1. Remove comments if any (simple regex, not perfect but helps)
+        jsonStr = jsonStr.replace(/\/\/.*$/gm, '');
+        
+        // 2. Fix Chinese quotes to English quotes, but be careful not to break text
+        // Ideally AI should output correct quotes. We only replace outer ones if they look wrong.
+        // But replacing all is safer if we assume AI follows instructions to use single quotes inside.
         jsonStr = jsonStr.replace(/“|”/g, '"').replace(/‘|’/g, "'");
         
         const firstBrace = jsonStr.indexOf('{');
@@ -124,7 +138,8 @@ export const callAIReview = async (
         }
       } catch (parseError) {
         console.error('JSON Parse Error for chunk:', parseError);
-        onProgress?.(`第 ${i + 1} 部分解析失败，已跳过。`);
+        console.log('Failed JSON content:', content); // For debugging
+        onProgress?.(`第 ${i + 1} 部分解析失败 (格式错误)，已跳过。`);
       }
 
     } catch (error: any) {

@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { Card, Collapse, Tag, Button, Input, List, Typography, Space, Spin } from 'antd';
+import { Card, Collapse, Tag, Button, Input, Typography, Space } from 'antd';
 import { SearchOutlined, DownloadOutlined } from '@ant-design/icons';
-import { ReviewResult, AIConfig } from '../types';
+import { AIConfig } from '../types';
 import { searchRelatedCompanies, searchSimilarCases } from '../services/aiService';
 
 const { Panel } = Collapse;
-const { Text, Title, Paragraph } = Typography;
+const { Text, Paragraph } = Typography;
 
 interface Props {
   result: any; // Parsed JSON from AI

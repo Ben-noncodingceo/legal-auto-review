@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Card, Upload, Button, message, Checkbox, Spin } from 'antd';
+import { Card, Upload, Button, message, Checkbox } from 'antd';
 import { UploadOutlined, FileTextOutlined } from '@ant-design/icons';
 import { ParsedFile, parseFile } from '../services/fileService';
 import { RiskType } from '../types';
@@ -12,22 +12,16 @@ interface Props {
 }
 
 const UploadPanel: React.FC<Props> = ({ onFileParsed, onRisksChange, onStartReview, canReview }) => {
-  const [loading, setLoading] = useState(false);
   const [fileName, setFileName] = useState<string>('');
-  const [preview, setPreview] = useState<string>('');
 
   const handleUpload = async (file: File) => {
-    setLoading(true);
     try {
       const parsed = await parseFile(file);
       setFileName(file.name);
-      setPreview(parsed.text.substring(0, 500) + '...'); // Show first 500 chars as preview
       onFileParsed({ parsed, file });
       message.success('文件解析成功');
     } catch (error: any) {
       message.error(error.message || '文件解析失败');
-    } finally {
-      setLoading(false);
     }
     return false; // Prevent auto upload
   };

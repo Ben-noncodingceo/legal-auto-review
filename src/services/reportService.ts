@@ -1,6 +1,5 @@
 import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType } from 'docx';
 import { saveAs } from 'file-saver';
-import { ReviewResult } from '../types';
 
 export const generateAndDownloadReport = async (
   originalText: string,

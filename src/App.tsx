@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { ConfigProvider, Layout, Steps, message, Spin, Modal, Typography } from 'antd';
-import { Content, Header } from 'antd/es/layout/layout';
+import { useState } from 'react';
+import { ConfigProvider, Layout, Steps, message, Spin, Modal } from 'antd';
+
 import ConfigPanel from './components/ConfigPanel';
 import UploadPanel from './components/UploadPanel';
 import ReviewBoard from './components/ReviewBoard';
@@ -10,7 +10,7 @@ import { callAIReview } from './services/aiService';
 import { generateAndDownloadReport } from './services/reportService';
 import './App.css';
 
-const { Title } = Typography;
+const { Content, Header } = Layout;
 
 function App() {
   const [currentStep, setCurrentStep] = useState(0);

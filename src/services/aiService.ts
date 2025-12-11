@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { jsonrepair } from 'jsonrepair';
 import { AIConfig, RiskType } from '../types';
 
 const API_ENDPOINTS = {
@@ -31,7 +32,7 @@ export const callAIReview = async (
   const selectedRisks = risks.map(r => riskLabels[r]).join('、');
   
   // 1. Chunking Strategy
-  const MAX_CHUNK_SIZE = 8000; // Safe limit for most models
+  const MAX_CHUNK_SIZE = 3000; // Reduced to avoid truncation (safe limit for most models)
   const chunks = [];
   for (let i = 0; i < text.length; i += MAX_CHUNK_SIZE) {
     chunks.push(text.substring(i, i + MAX_CHUNK_SIZE));
@@ -95,6 +96,7 @@ export const callAIReview = async (
         API_ENDPOINTS[config.provider],
         {
           model: model,
+          max_tokens: 4000, // Ensure enough tokens for response
           messages: [
             { role: 'system', content: '你是一位乐于助人的专业法律助手。请输出合法的纯JSON数据。' },
             { role: 'user', content: prompt }
@@ -134,7 +136,17 @@ export const callAIReview = async (
           jsonStr = jsonStr.substring(firstBrace, lastBrace + 1);
         }
 
-        const result = JSON.parse(jsonStr);
+        let result;
+        try {
+          result = JSON.parse(jsonStr);
+        } catch (initialParseError) {
+           console.warn('Initial JSON parse failed, attempting repair...', initialParseError);
+           // Try to repair JSON
+           const repairedJson = jsonrepair(jsonStr);
+           result = JSON.parse(repairedJson);
+           console.log('JSON repair successful');
+        }
+
         if (result.reviews && Array.isArray(result.reviews)) {
           allReviews = [...allReviews, ...result.reviews];
           onProgress?.(`第 ${i + 1} 部分分析完成，发现 ${result.reviews.length} 个风险点。`);

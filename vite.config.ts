@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react'
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  base: '/legal-auto-review/', // 关键配置：使用仓库名称作为路径，适配 GitHub Pages
+  base: './', // 关键配置：使用相对路径，适配 GitHub Pages 和 Cloudflare Pages
   plugins: [react()],
   server: {
     proxy: {

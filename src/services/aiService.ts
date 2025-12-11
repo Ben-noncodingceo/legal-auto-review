@@ -2,15 +2,9 @@ import axios from 'axios';
 import { AIConfig, RiskType } from '../types';
 
 const API_ENDPOINTS = {
-  deepseek: import.meta.env.DEV 
-    ? '/api/deepseek/chat/completions' 
-    : 'https://api.deepseek.com/chat/completions',
-  doubao: import.meta.env.DEV 
-    ? '/api/doubao/api/v3/chat/completions' 
-    : 'https://ark.cn-beijing.volces.com/api/v3/chat/completions', 
-  tongyi: import.meta.env.DEV 
-    ? '/api/tongyi/compatible-mode/v1/chat/completions' 
-    : 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions',
+  deepseek: '/api/deepseek/chat/completions',
+  doubao: '/api/doubao/api/v3/chat/completions',
+  tongyi: '/api/tongyi/compatible-mode/v1/chat/completions',
 };
 
 const MODELS = {

@@ -49,9 +49,14 @@ const ConfigPanel: React.FC<Props> = ({ onConfirm, initialConfig }) => {
         />
       ) : (
         <Alert 
-          message="生产环境 (GitHub Pages) 注意" 
-          description="浏览器会拦截跨域请求。请务必安装浏览器插件 'Allow CORS' 才能正常使用，或者使用支持跨域的 API 代理。" 
-          type="warning" 
+          message="生产环境说明" 
+          description={
+            <div>
+              <p>如果您在 <b>Cloudflare Pages</b> 访问，内置代理已自动处理 CORS，可直接使用。</p>
+              <p className="mt-1">如果您在 <b>GitHub Pages</b> 访问，需要安装浏览器插件 'Allow CORS' 才能绕过跨域限制。</p>
+            </div>
+          }
+          type="info" 
           showIcon 
           className="mb-4 text-xs"
         />

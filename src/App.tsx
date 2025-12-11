@@ -4,7 +4,7 @@ import { ConfigProvider, Layout, Steps, message, Spin, Modal } from 'antd';
 import ConfigPanel from './components/ConfigPanel';
 import UploadPanel from './components/UploadPanel';
 import ReviewBoard from './components/ReviewBoard';
-import { AIConfig, RiskType } from './types';
+import { AIConfig, RiskType, ReviewPerspective } from './types';
 import { ParsedFile } from './services/fileService';
 import { callAIReview } from './services/aiService';
 import { generateAndDownloadReport } from './services/reportService';
@@ -17,9 +17,11 @@ function App() {
   const [aiConfig, setAiConfig] = useState<AIConfig | null>(null);
   const [parsedFile, setParsedFile] = useState<{ parsed: ParsedFile, file: File } | null>(null);
   const [selectedRisks, setSelectedRisks] = useState<RiskType[]>([]);
+  const [perspective, setPerspective] = useState<ReviewPerspective>('partyA');
   const [reviewResult, setReviewResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [logs, setLogs] = useState<string[]>([]);
+  const [focusRiskIndex, setFocusRiskIndex] = useState<number | null>(null);
 
   const handleConfigConfirm = (config: AIConfig) => {
     setAiConfig(config);
@@ -40,7 +42,7 @@ function App() {
     setLoading(true);
     setLogs([]);
     try {
-      const resultJson = await callAIReview(aiConfig, parsedFile.parsed.text, selectedRisks, (log) => {
+      const resultJson = await callAIReview(aiConfig, parsedFile.parsed.text, selectedRisks, perspective, (log) => {
          setLogs(prev => [...prev, log]);
       });
       console.log('AI Result:', resultJson);
@@ -115,6 +117,7 @@ function App() {
               <UploadPanel 
                 onFileParsed={handleFileParsed}
                 onRisksChange={setSelectedRisks}
+                onPerspectiveChange={setPerspective}
                 onStartReview={handleStartReview}
                 canReview={!!parsedFile && selectedRisks.length > 0}
               />
@@ -126,6 +129,8 @@ function App() {
                 reviewResult={reviewResult}
                 aiConfig={aiConfig}
                 onDownload={handleDownload}
+                focusRiskIndex={focusRiskIndex}
+                onLocateRisk={setFocusRiskIndex}
               />
             )}
           </div>

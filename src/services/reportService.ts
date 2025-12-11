@@ -86,45 +86,26 @@ export const generateAndDownloadReport = async (
     pageBreakBefore: true,
   });
 
-  // Simple highlighting logic:
-  // We'll iterate through the text and split it by the snippets we need to highlight.
-  // This is naive and assumes snippets don't overlap and are found.
-  // To make it robust, we need to sort snippets by position.
-  // But we don't have positions, only text. We'll search for them.
-  
-  const textRuns: TextRun[] = [];
+  // Highlight logic
+  interface TextSegment {
+    text: string;
+    highlight?: string;
+  }
+
+  const segments: TextSegment[] = [];
   let remainingText = originalText;
   
-  // We need to process snippets in order of appearance in the text
-  // 1. Find all snippet indices
   const snippets = reviews.map((r: any) => ({
     text: r.original_text_snippet,
     reason: r.reason
   })).filter((s: any) => s.text && remainingText.includes(s.text));
 
-  // Sort by index in text (greedy)
-  // This is complex if snippets repeat. We'll just take the first occurrence for now.
-  // Ideally we should track cursor.
-
   let cursor = 0;
-  // We need to construct a list of {start, end, text, highlight}
-  // But searching repeatedly is slow.
-  // Let's just try to highlight strictly sequentially if possible, or just naive split.
-  
-  // Strategy:
-  // 1. Find the first occurrence of any snippet after cursor.
-  // 2. Add text before it as normal.
-  // 3. Add snippet as highlighted.
-  // 4. Move cursor.
-  // 5. Repeat.
-
-  // To do this, we need to find which snippet appears *earliest* after current cursor.
   
   while (cursor < originalText.length) {
     let nextSnippet: any = null;
     let nextIndex = Infinity;
 
-    // Find nearest snippet
     for (const s of snippets) {
       const idx = originalText.indexOf(s.text, cursor);
       if (idx !== -1 && idx < nextIndex) {
@@ -134,58 +115,46 @@ export const generateAndDownloadReport = async (
     }
 
     if (nextSnippet && nextIndex !== Infinity) {
-      // Add text before
       if (nextIndex > cursor) {
-        textRuns.push(new TextRun({ text: originalText.substring(cursor, nextIndex) }));
+        segments.push({ text: originalText.substring(cursor, nextIndex) });
       }
-      // Add highlighted snippet
-      textRuns.push(new TextRun({
+      segments.push({
         text: nextSnippet.text,
-        highlight: "yellow", // or "red"
-        bold: true,
-      }));
+        highlight: "yellow",
+      });
       cursor = nextIndex + nextSnippet.text.length;
     } else {
-      // No more snippets
-      textRuns.push(new TextRun({ text: originalText.substring(cursor) }));
+      segments.push({ text: originalText.substring(cursor) });
       break;
     }
   }
 
-  // Split textRuns into paragraphs (by newlines) to preserve some structure
-  // This is tricky because TextRuns are inline. 
-  // We can just add one huge paragraph or try to split.
-  // For simplicity, we'll just add one paragraph with all runs, 
-  // but Word handles newlines in TextRuns poorly (need \n or separate paragraphs).
-  // Better: split the `textRuns` list where text contains `\n`.
-  // Or just use `break: 1` in TextRun.
-  
-  // We will post-process textRuns to handle newlines.
   const finalParagraphs: Paragraph[] = [];
   let currentChildren: TextRun[] = [];
 
-  textRuns.forEach(run => {
-    const parts = (run as any).options.text.split('\n');
-    parts.forEach((part: string, i: number) => {
+  segments.forEach(seg => {
+    // Split by newline
+    const parts = seg.text.split('\n');
+    parts.forEach((part, i) => {
       if (part) {
-        currentChildren.push(new TextRun({ ... (run as any).options, text: part }));
+        currentChildren.push(new TextRun({
+          text: part,
+          highlight: seg.highlight as any,
+          bold: !!seg.highlight,
+        }));
       }
+      
+      // If there are more parts, it means there was a newline
       if (i < parts.length - 1) {
-        // Newline encountered, push paragraph
-        if (currentChildren.length > 0) {
-          finalParagraphs.push(new Paragraph({ children: currentChildren }));
-          currentChildren = [];
-        } else {
-          // Empty line
-          finalParagraphs.push(new Paragraph({ children: [new TextRun("")] }));
-        }
+        finalParagraphs.push(new Paragraph({ children: currentChildren }));
+        currentChildren = [];
       }
     });
   });
+
   if (currentChildren.length > 0) {
     finalParagraphs.push(new Paragraph({ children: currentChildren }));
   }
-
 
   const doc = new Document({
     sections: [

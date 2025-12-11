@@ -1,18 +1,20 @@
 import React, { useState } from 'react';
-import { Card, Upload, Button, message, Checkbox } from 'antd';
+import { Card, Upload, Button, message, Checkbox, Radio } from 'antd';
 import { UploadOutlined, FileTextOutlined } from '@ant-design/icons';
 import { ParsedFile, parseFile } from '../services/fileService';
-import { RiskType } from '../types';
+import { RiskType, ReviewPerspective } from '../types';
 
 interface Props {
   onFileParsed: (fileData: { parsed: ParsedFile, file: File }) => void;
   onRisksChange: (risks: RiskType[]) => void;
+  onPerspectiveChange: (perspective: ReviewPerspective) => void;
   onStartReview: () => void;
   canReview: boolean;
 }
 
-const UploadPanel: React.FC<Props> = ({ onFileParsed, onRisksChange, onStartReview, canReview }) => {
+const UploadPanel: React.FC<Props> = ({ onFileParsed, onRisksChange, onPerspectiveChange, onStartReview, canReview }) => {
   const [fileName, setFileName] = useState<string>('');
+  const [perspective, setPerspective] = useState<ReviewPerspective>('partyA');
 
   const handleUpload = async (file: File) => {
     try {
@@ -31,6 +33,12 @@ const UploadPanel: React.FC<Props> = ({ onFileParsed, onRisksChange, onStartRevi
     { label: '财务风险', value: 'financial' },
     { label: '执行风险', value: 'execution' },
   ];
+
+  const handlePerspectiveChange = (e: any) => {
+    const val = e.target.value;
+    setPerspective(val);
+    onPerspectiveChange(val);
+  };
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -56,13 +64,21 @@ const UploadPanel: React.FC<Props> = ({ onFileParsed, onRisksChange, onStartRevi
       </Card>
 
       <Card title="2. 审核重点" className="shadow-md">
-        <div className="flex flex-col h-full justify-between">
+        <div className="flex flex-col h-full gap-6">
           <div>
-            <p className="mb-4 text-gray-600">选择AI审核时重点关注的风险领域：</p>
+            <p className="mb-2 font-medium text-gray-700">选择您的立场：</p>
+            <Radio.Group value={perspective} onChange={handlePerspectiveChange} buttonStyle="solid">
+              <Radio.Button value="partyA">甲方 (权利方/委托方)</Radio.Button>
+              <Radio.Button value="partyB">乙方 (义务方/受托方)</Radio.Button>
+            </Radio.Group>
+          </div>
+
+          <div>
+            <p className="mb-2 font-medium text-gray-700">重点关注风险：</p>
             <Checkbox.Group 
               options={riskOptions} 
               onChange={(vals) => onRisksChange(vals as RiskType[])}
-              className="flex flex-col gap-3"
+              className="flex flex-col gap-2"
             />
           </div>
           
@@ -71,7 +87,7 @@ const UploadPanel: React.FC<Props> = ({ onFileParsed, onRisksChange, onStartRevi
             size="large" 
             onClick={onStartReview} 
             disabled={!canReview}
-            className="mt-6"
+            className="mt-auto"
           >
             开始智能审核
           </Button>

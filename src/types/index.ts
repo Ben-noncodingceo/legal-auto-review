@@ -10,6 +10,8 @@ export type RiskType = 'policy' | 'financial' | 'execution';
 
 export type RiskLevel = 'high' | 'medium' | 'low';
 
+export type ReviewPerspective = 'partyA' | 'partyB';
+
 export interface ReviewResult {
   originalText: string;
   markedText: string; // HTML or structured text with markers

@@ -17,6 +17,7 @@ export const callAIReview = async (
   config: AIConfig,
   text: string,
   risks: RiskType[],
+  perspective: 'partyA' | 'partyB' = 'partyA',
   onProgress?: (log: string) => void
 ): Promise<string> => {
   const riskLabels = {
@@ -25,6 +26,8 @@ export const callAIReview = async (
     execution: '执行风险'
   };
   
+  const perspectiveLabel = perspective === 'partyA' ? '甲方（权利方/委托方）' : '乙方（义务方/受托方）';
+
   const selectedRisks = risks.map(r => riskLabels[r]).join('、');
   
   // 1. Chunking Strategy
@@ -44,7 +47,7 @@ export const callAIReview = async (
     
     const prompt = `
     你是一位专业的法律审核助手。
-    请审核以下法律文件的内容片段。
+    请站在【${perspectiveLabel}】的立场上，审核以下法律文件的内容片段。
     
     重點关注以下风险：${selectedRisks}。
 

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Card, Collapse, Tag, Button, Input, Typography, Space } from 'antd';
-import { SearchOutlined, DownloadOutlined } from '@ant-design/icons';
+import { SearchOutlined, DownloadOutlined, EyeOutlined } from '@ant-design/icons';
 import { AIConfig } from '../types';
 import { searchRelatedCompanies, searchSimilarCases } from '../services/aiService';
 
@@ -11,9 +11,10 @@ interface Props {
   result: any; // Parsed JSON from AI
   aiConfig: AIConfig;
   onDownload: () => void;
+  onLocateRisk: (index: number) => void;
 }
 
-const ResultPanel: React.FC<Props> = ({ result, aiConfig, onDownload }) => {
+const ResultPanel: React.FC<Props> = ({ result, aiConfig, onDownload, onLocateRisk }) => {
   const [loadingCompany, setLoadingCompany] = useState(false);
   const [loadingCase, setLoadingCase] = useState(false);
   const [companyInfo, setCompanyInfo] = useState<string>('');
@@ -100,10 +101,22 @@ const ResultPanel: React.FC<Props> = ({ result, aiConfig, onDownload }) => {
                     {item.risk_level && (
                       <Tag color={getRiskLevelColor(item.risk_level)}>{getRiskLevelLabel(item.risk_level)}</Tag>
                     )}
-                    风险项 #{idx + 1}
+                    <Text strong>{item.risk_type === 'policy' ? '政策风险' : (item.risk_type === 'financial' ? '财务风险' : '条款风险')}</Text>
                   </Space>
-                } 
+                }
                 key={idx}
+                extra={
+                  <Button 
+                    type="text" 
+                    icon={<EyeOutlined />} 
+                    size="small"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onLocateRisk(idx);
+                    }}
+                    title="在原文中定位"
+                  />
+                }
               >
                 <Paragraph><strong>原因：</strong> {item.reason}</Paragraph>
                 <Paragraph><strong>建议：</strong> {item.suggestion}</Paragraph>

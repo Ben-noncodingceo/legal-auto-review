@@ -112,7 +112,18 @@ export const callAIReview = async (
         { headers }
       );
 
-      const content = response.data.choices[0].message.content;
+      // DeepSeek sometimes returns errors in 200 OK responses if not standard OpenAI format
+      if (config.provider === 'deepseek' && !response.data.choices && (response.data as any).error) {
+         throw new Error(`DeepSeek API Error: ${(response.data as any).error.message}`);
+      }
+
+      let content = '';
+      if (response.data && response.data.choices && response.data.choices.length > 0) {
+        content = response.data.choices[0].message.content;
+      } else {
+        console.error('Unexpected API Response Structure:', response.data);
+        throw new Error(`API返回结构异常: ${JSON.stringify(response.data)}`);
+      }
       
       // Parse chunk result
       try {

@@ -74,7 +74,7 @@ export const callAIReview = async (
     如果未发现风险，请返回 {"reviews": []}。
     
     重要：请确保输出的是合法的纯JSON字符串。
-    1. 不要包含markdown代码块标记（如 ```json）。
+    1. 不要包含markdown代码块标记（如 \`\`\`json）。
     2. JSON字符串中不得包含未转义的控制字符（如换行符）。
     3. 如果内容中包含引号，请使用单引号或转义双引号。
     4. 不要添加任何注释。

@@ -10,7 +10,7 @@ import { callAIReview } from './services/aiService';
 import { generateAndDownloadReport } from './services/reportService';
 import './App.css';
 
-const { Content, Header } = Layout;
+const { Content, Header, Footer } = Layout;
 
 function App() {
   const [currentStep, setCurrentStep] = useState(0);
@@ -135,6 +135,10 @@ function App() {
             )}
           </div>
         </Content>
+
+        <Footer className="text-center text-gray-500 bg-gray-50">
+          联系作者： sunpeng@eduzhixin.com
+        </Footer>
 
         {loading && (
            <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex flex-col items-center justify-center backdrop-blur-sm">

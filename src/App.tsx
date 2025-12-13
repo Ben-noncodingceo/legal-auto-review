@@ -4,9 +4,9 @@ import { ConfigProvider, Layout, Steps, message, Spin, Modal } from 'antd';
 import ConfigPanel from './components/ConfigPanel';
 import UploadPanel from './components/UploadPanel';
 import ReviewBoard from './components/ReviewBoard';
-import { AIConfig, RiskType, ReviewPerspective } from './types';
+import { AIConfig, RiskType, ReviewPerspective, ReviewMode, ExcelOutlineData } from './types';
 import { ParsedFile } from './services/fileService';
-import { callAIReview } from './services/aiService';
+import { callAIReview, reviewByOutline } from './services/aiService';
 import { generateAndDownloadReport } from './services/reportService';
 import './App.css';
 
@@ -22,6 +22,9 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [logs, setLogs] = useState<string[]>([]);
   const [focusRiskIndex, setFocusRiskIndex] = useState<number | null>(null);
+  const [reviewMode, setReviewMode] = useState<ReviewMode>('standard');
+  const [outlineData, setOutlineData] = useState<ExcelOutlineData | null>(null);
+  const [filledOutlineItems, setFilledOutlineItems] = useState<any[] | null>(null);
 
   const handleConfigConfirm = (config: AIConfig) => {
     setAiConfig(config);
@@ -33,42 +36,85 @@ function App() {
     setParsedFile(data);
   };
 
+  const handleReviewModeChange = (mode: ReviewMode) => {
+    setReviewMode(mode);
+    // 清除之前的审查结果
+    setReviewResult(null);
+    setFilledOutlineItems(null);
+  };
+
+  const handleOutlineParsed = (data: ExcelOutlineData) => {
+    setOutlineData(data);
+  };
+
   const handleStartReview = async () => {
-    if (!aiConfig || !parsedFile || selectedRisks.length === 0) {
+    if (!aiConfig || !parsedFile) {
       message.error('请完成所有设置');
+      return;
+    }
+
+    // 标准模式需要选择风险类型
+    if (reviewMode === 'standard' && selectedRisks.length === 0) {
+      message.error('请至少选择一个关注的风险类型');
+      return;
+    }
+
+    // 纲要模式需要上传审查纲要
+    if (reviewMode === 'outline' && !outlineData) {
+      message.error('请上传审查纲要Excel文件');
       return;
     }
 
     setLoading(true);
     setLogs([]);
+
     try {
-      const resultJson = await callAIReview(aiConfig, parsedFile.parsed.text, selectedRisks, perspective, (log) => {
-         setLogs(prev => [...prev, log]);
-      });
-      console.log('AI Result:', resultJson);
-      
-      // Try to parse JSON. Sometimes AI returns markdown like ```json ... ```
-      let jsonStr = resultJson;
-      if (jsonStr.includes('```json')) {
-        jsonStr = jsonStr.split('```json')[1].split('```')[0];
-      } else if (jsonStr.includes('```')) {
-        jsonStr = jsonStr.split('```')[1].split('```')[0];
-      }
+      if (reviewMode === 'standard') {
+        // 标准审查模式
+        const resultJson = await callAIReview(aiConfig, parsedFile.parsed.text, selectedRisks, perspective, (log) => {
+           setLogs(prev => [...prev, log]);
+        });
+        console.log('AI Result:', resultJson);
 
-      // 修复: 替换中文智能引号为标准引号，并移除可能存在的非JSON字符
-      jsonStr = jsonStr.replace(/“|”/g, '"').replace(/‘|’/g, "'");
-      
-      // 尝试提取 JSON 对象 (从第一个 { 到最后一个 })
-      const firstBrace = jsonStr.indexOf('{');
-      const lastBrace = jsonStr.lastIndexOf('}');
-      if (firstBrace !== -1 && lastBrace !== -1) {
-        jsonStr = jsonStr.substring(firstBrace, lastBrace + 1);
-      }
+        // Try to parse JSON. Sometimes AI returns markdown like ```json ... ```
+        let jsonStr = resultJson;
+        if (jsonStr.includes('```json')) {
+          jsonStr = jsonStr.split('```json')[1].split('```')[0];
+        } else if (jsonStr.includes('```')) {
+          jsonStr = jsonStr.split('```')[1].split('```')[0];
+        }
 
-      const result = JSON.parse(jsonStr);
-      setReviewResult(result);
-      setCurrentStep(2);
-      message.success('智能审核完成');
+        // 修复: 替换中文智能引号为标准引号，并移除可能存在的非JSON字符
+        jsonStr = jsonStr.replace(/"|"/g, '"').replace(/'|'/g, "'");
+
+        // 尝试提取 JSON 对象 (从第一个 { 到最后一个 })
+        const firstBrace = jsonStr.indexOf('{');
+        const lastBrace = jsonStr.lastIndexOf('}');
+        if (firstBrace !== -1 && lastBrace !== -1) {
+          jsonStr = jsonStr.substring(firstBrace, lastBrace + 1);
+        }
+
+        const result = JSON.parse(jsonStr);
+        setReviewResult(result);
+        setCurrentStep(2);
+        message.success('智能审核完成');
+      } else {
+        // 纲要审查模式
+        setLogs(['开始基于审查纲要进行逐项审查...']);
+        const filled = await reviewByOutline(
+          aiConfig,
+          parsedFile.parsed.text,
+          outlineData!.items,
+          perspective,
+          (current, total, itemName) => {
+            setLogs(prev => [...prev, `[${current}/${total}] 正在审查: ${itemName}`]);
+          }
+        );
+
+        setFilledOutlineItems(filled);
+        setCurrentStep(2);
+        message.success(`审查完成，共完成 ${filled.length} 个审查项目`);
+      }
     } catch (error: any) {
       console.error(error);
       Modal.error({
@@ -114,23 +160,31 @@ function App() {
             )}
 
             {currentStep === 1 && (
-              <UploadPanel 
+              <UploadPanel
                 onFileParsed={handleFileParsed}
                 onRisksChange={setSelectedRisks}
                 onPerspectiveChange={setPerspective}
                 onStartReview={handleStartReview}
-                canReview={!!parsedFile && selectedRisks.length > 0}
+                onReviewModeChange={handleReviewModeChange}
+                onOutlineParsed={handleOutlineParsed}
+                canReview={
+                  !!parsedFile &&
+                  (reviewMode === 'standard' ? selectedRisks.length > 0 : !!outlineData)
+                }
               />
             )}
 
             {currentStep === 2 && parsedFile && aiConfig && (
-              <ReviewBoard 
+              <ReviewBoard
                 fileData={parsedFile.parsed}
                 reviewResult={reviewResult}
                 aiConfig={aiConfig}
                 onDownload={handleDownload}
                 focusRiskIndex={focusRiskIndex}
                 onLocateRisk={setFocusRiskIndex}
+                reviewMode={reviewMode}
+                outlineData={outlineData}
+                filledOutlineItems={filledOutlineItems}
               />
             )}
           </div>

@@ -32,3 +32,24 @@ export interface FileData {
   originalFile: File;
   type: 'pdf' | 'docx';
 }
+
+export type ReviewMode = 'standard' | 'outline';
+
+export interface ExcelOutlineData {
+  file: File;
+  items: {
+    row: number;
+    itemName: string;
+    description: string;
+    result?: string;
+  }[];
+  originalWorkbook: any;
+  sheetName: string;
+}
+
+export interface OutlineReviewProgress {
+  currentItem: number;
+  totalItems: number;
+  itemName: string;
+  status: 'processing' | 'completed' | 'error';
+}
